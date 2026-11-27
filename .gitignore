@@ -1,0 +1,66 @@
+# === Environment & Secrets ===
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+google-services.json
+GoogleService-Info.plist
+
+# === Python / FastAPI ===
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# === Flutter / Dart ===
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Pods/
+**/ios/.symlinks/
+
+# === Node / React (Admin CRM) ===
+node_modules/
+.next/
+out/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Docker & Logs ===
+*.log
+postgres_data/
+redis_data/
+minio_data/
+
+# === IDEs & OS ===
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
