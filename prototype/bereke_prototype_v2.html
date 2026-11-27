@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bereke — Интерактивный прототип (v2)</title>
+<style>
+  :root {
+    --primary: #146C43;
+    --primary-light: #E8F3EE;
+    --primary-dark: #0E4F30;
+    --accent: #D97706;
+    --accent-light: #FEF3C7;
+    --bg: #F7F7F5;
+    --surface: #FFFFFF;
+    --text: #18181B;
+    --text-muted: #6B7280;
+    --border: #E4E4E7;
+    --danger: #DC2626;
+    --danger-light: #FEE2E2;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: #E7E6E2;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .mode-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    background: var(--surface);
+    padding: 6px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+
+  .mode-btn {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mode-btn.active {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .phone-frame {
+    width: 393px;
+    height: 820px;
+    background: var(--bg);
+    border-radius: 44px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.16), 0 0 0 10px #1F2024;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    height: 36px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .notch {
+    width: 110px;
+    height: 22px;
+    background: #1F2024;
+    border-radius: 999px;
+  }
+
+  .app-header {
+    background: var(--surface);
+    padding: 10px 18px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand-name {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: var(--text);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    font-size: 16px;
+  }
+
+  .badge-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: absolute;
+    top: 7px;
+    right: 7px;
+  }
+
+  .screen-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 84px;
+  }
+
+  .screen-body::-webkit-scrollbar {
+    width: 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .banner {
+    background: linear-gradient(135deg, #146C43 0%, #0E4F30 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .banner-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+  }
+
+  .banner h2 {
+    font-size: 18px;
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+
+  .banner p {
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+  }
+
+  .input:focus {
+    border-color: var(--primary);
+  }
+
+  .chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+
+  .chips::-webkit-scrollbar { display: none; }
+
+  .chip {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .chip.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  .filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .select-mini {
+    padding: 7px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .product-card {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .product-card:active {
+    transform: scale(0.98);
+  }
+
+  .phone-art {
+    height: 105px;
+    background: var(--bg);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.15);
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+  }
+
+  .p-brand {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .p-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 2px 0 6px;
+    line-height: 1.25;
+  }
+
+  .p-monthly {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .p-full {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn:active { opacity: 0.88; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 9px 12px; font-size: 13px; border-radius: 10px; width: auto; }
+
+  .term-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 10px 0 16px;
+  }
+
+  .term-btn {
+    padding: 10px 4px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .term-btn.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--primary);
+    margin: 8px 0;
+  }
+
+  .calc-summary {
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 14px;
+    margin-top: 12px;
+  }
+
+  .calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .calc-row:last-child { margin-bottom: 0; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+  .tab-bar {
+    height: 68px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: 6px;
+  }
+
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+  }
+
+  .tab-item.active {
+    color: var(--primary);
+  }
+
+  .tab-icon { font-size: 19px; }
+
+  .kyc-box {
+    border: 1.5px dashed var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    cursor: pointer;
+    background: var(--bg);
+  }
+
+  .kyc-box.done {
+    border-style: solid;
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .badge-green { background: var(--primary-light); color: var(--primary); }
+  .badge-amber { background: var(--accent-light); color: var(--accent); }
+  .badge-red { background: var(--danger-light); color: var(--danger); }
+
+  .sheet-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(24,24,27,0.45);
+    display: none;
+    align-items: flex-end;
+    z-index: 30;
+  }
+
+  .sheet-overlay.open { display: flex; }
+
+  .sheet {
+    background: var(--surface);
+    width: 100%;
+    border-radius: 26px 26px 0 0;
+    padding: 20px 18px 28px;
+    max-height: 82%;
+    overflow-y: auto;
+  }
+
+  .sheet-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .chat-msg {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    margin-bottom: 8px;
+    max-width: 82%;
+    line-height: 1.35;
+  }
+
+  .chat-bot {
+    background: var(--bg);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+
+  .chat-user {
+    background: var(--primary);
+    color: #fff;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+
+  .progress-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 999px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .stat-val {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--primary);
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+
+<div class="mode-bar">
+  <button class="mode-btn active" id="btnClientMode" onclick="switchAppMode('client')">📱 Клиентское приложение</button>
+  <button class="mode-btn" id="btnAdminMode" onclick="switchAppMode('admin')">🖥️ Админ-панель (CRM)</button>
+</div>
+
+<div class="phone-frame">
+  <div class="status-bar">
+    <span>09:41</span>
+    <div class="notch"></div>
+    <span>5G 100%</span>
+  </div>
+
+  <div class="app-header">
+    <div class="brand-row" onclick="goTab('catalog')" style="cursor:pointer;">
+      <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+        <rect width="64" height="64" rx="16" fill="#146C43"/>
+        <path d="M32 14C26 22 25 30 32 38C39 30 38 22 32 14Z" fill="#D97706"/>
+        <path d="M15 32C15 43 23 49 31 49C31 39 24 33 15 32Z" fill="#FFFFFF"/>
+        <path d="M49 32C49 43 41 49 33 49C33 39 40 33 49 32Z" fill="#FFFFFF"/>
+      </svg>
+      <span class="brand-name">Bereke</span>
+    </div>
+    <div class="header-actions" id="clientHeaderActions">
+      <button class="icon-btn" title="Уведомления" onclick="openSheet('notifSheet')">
+        🔔<span class="badge-dot" id="notifDot"></span>
+      </button>
+      <button class="icon-btn" title="Чат поддержки" onclick="openSheet('chatSheet')">💬</button>
+    </div>
+  </div>
+
+  <!-- CLIENT SCREENS -->
+  <div class="screen-body" id="clientScreen"></div>
+
+  <!-- ADMIN SCREEN -->
+  <div class="screen-body" id="adminScreen" style="display:none;"></div>
+
+  <!-- BOTTOM NAVIGATION -->
+  <div class="tab-bar" id="clientTabBar">
+    <button class="tab-item active" data-tab="catalog" onclick="goTab('catalog')">
+      <span class="tab-icon">📱</span><span>Каталог</span>
+    </button>
+    <button class="tab-item" data-tab="cart" onclick="goTab('cart')">
+      <span class="tab-icon">🛒</span><span id="cartTabLabel">Корзина</span>
+    </button>
+    <button class="tab-item" data-tab="payments" onclick="goTab('payments')">
+      <span class="tab-icon">📅</span><span>Платежи</span>
+    </button>
+    <button class="tab-item" data-tab="profile" onclick="goTab('profile')">
+      <span class="tab-icon">👤</span><span>Профиль</span>
+    </button>
+  </div>
+
+  <!-- NOTIFICATIONS SHEET -->
+  <div class="sheet-overlay" id="notifSheet" onclick="closeSheetOnBg(event, 'notifSheet')">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>Уведомления</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeSheet('notifSheet')">Закрыть</button>
+      </div>
+      <div class="card" style="background:var(--primary-light);border-color:var(--primary);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <strong style="font-size:13px;color:var(--primary);">Напоминание о платеже</strong>
+          <span style="font-size:11px;color:var(--text-muted);">За 3 дня</span>
+        </div>
+        <p style="font-size:13px;">Плановый платёж по рассрочке iPhone 15 (7 492 сом) будет списан автоматически 15 декабря.</p>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <strong style="font-size:13px;">Лимит рассрочки обновлён</strong>
+          <span style="font-size:11px;color:var(--text-muted);">Вчера</span>
+        </div>
+        <p style="font-size:13px;">Вам доступен персональный лимит до 150 000 сом без первоначального взноса.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPPORT CHAT SHEET -->
+  <div class="sheet-overlay" id="chatSheet" onclick="closeSheetOnBg(event, 'chatSheet')">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>Поддержка Bereke</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeSheet('chatSheet')">Закрыть</button>
+      </div>
+      <div id="chatHistory" style="margin-bottom:12px;max-height:260px;overflow-y:auto;">
+        <div class="chat-msg chat-bot">Саламатсызбы! Я помощник Bereke. Подсказать по условиям рассрочки, документам или досрочному погашению?</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+        <button class="chip" onclick="sendQuickChat('Какие нужны документы?')">Документы для KYC</button>
+        <button class="chip" onclick="sendQuickChat('Как погасить досрочно?')">Досрочное погашение</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input class="input" id="chatInput" placeholder="Напишите вопрос...">
+        <button class="btn btn-primary btn-sm" onclick="sendUserChat()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const products = [
+  { id: 1, brand: 'Apple', name: 'iPhone 15', price: 89900, colorName: 'Чёрный титан', colorHex: '#27272A', storages: ['128 ГБ', '256 ГБ', '512 ГБ'], popular: 10 },
+  { id: 2, brand: 'Apple', name: 'iPhone 16 Pro', price: 124900, colorName: 'Пустынный титан', colorHex: '#C2A887', storages: ['256 ГБ', '512 ГБ', '1 ТБ'], popular: 9 },
+  { id: 3, brand: 'Samsung', name: 'Galaxy S24 Ultra', price: 108500, colorName: 'Серый', colorHex: '#71717A', storages: ['256 ГБ', '512 ГБ'], popular: 8 },
+  { id: 4, brand: 'Samsung', name: 'Galaxy A55 5G', price: 38900, colorName: 'Лайм', colorHex: '#BEF264', storages: ['128 ГБ', '256 ГБ'], popular: 7 },
+  { id: 5, brand: 'Xiaomi', name: 'Xiaomi 14T Pro', price: 54500, colorName: 'Синий', colorHex: '#2563EB', storages: ['256 ГБ', '512 ГБ'], popular: 6 },
+  { id: 6, brand: 'Xiaomi', name: 'Redmi Note 13 Pro+', price: 31900, colorName: 'Белый', colorHex: '#F4F4F5', storages: ['256 ГБ', '512 ГБ'], popular: 8 }
+];
+
+let state = {
+  appMode: 'client',
+  isAuthenticated: false,
+  userPhone: '+996 700 123 456',
+  userName: 'Азамат Токтогулов',
+  otpSent: false,
+  currentTab: 'catalog',
+  selectedBrand: 'Все',
+  selectedColor: 'Все',
+  sortBy: 'popular',
+  searchQuery: '',
+  activeProduct: null,
+  selectedStorage: '128 ГБ',
+  termMonths: 12,
+  downPaymentPct: 0,
+  cartItem: null,
+  kycIdDone: false,
+  kycSelfieDone: false,
+  linkedCard: 'Элкарт •••• 4821',
+  installments: [
+    {
+      id: 'BRK-2026-084',
+      device: 'iPhone 15 128 ГБ',
+      total: 89900,
+      monthly: 7492,
+      monthsTotal: 12,
+      monthsPaid: 2,
+      nextDate: '15.12.2026',
+      autoPay: true,
+      status: 'Активна'
+    }
+  ],
+  adminApplications: [
+    { id: 'BRK-2026-091', client: 'Айгуль Садыкова', phone: '+996 555 889 900', device: 'iPhone 16 Pro 256 ГБ', amount: 124900, term: 12, kyc: 'Проверен', status: 'На проверке' },
+    { id: 'BRK-2026-089', client: 'Бекзат Исаков', phone: '+996 772 334 455', device: 'Galaxy S24 Ultra', amount: 108500, term: 24, kyc: 'Проверен', status: 'Одобрено' }
+  ]
+};
+
+function fmt(num) {
+  return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' сом';
+}
+
+function switchAppMode(mode) {
+  state.appMode = mode;
+  document.getElementById('btnClientMode').classList.toggle('active', mode === 'client');
+  document.getElementById('btnAdminMode').classList.toggle('active', mode === 'admin');
+  document.getElementById('clientScreen').style.display = mode === 'client' ? 'block' : 'none';
+  document.getElementById('clientTabBar').style.display = mode === 'client' ? 'flex' : 'none';
+  document.getElementById('clientHeaderActions').style.display = mode === 'client' ? 'flex' : 'none';
+  document.getElementById('adminScreen').style.display = mode === 'admin' ? 'block' : 'none';
+  if (mode === 'admin') renderAdmin();
+  else renderClient();
+}
+
+function goTab(tab) {
+  state.currentTab = tab;
+  state.activeProduct = null;
+  document.querySelectorAll('.tab-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  renderClient();
+}
+
+function renderClient() {
+  const container = document.getElementById('clientScreen');
+  if (!state.isAuthenticated) {
+    container.innerHTML = renderAuthScreen();
+    return;
+  }
+  if (state.activeProduct) {
+    container.innerHTML = renderProductDetail(state.activeProduct);
+    return;
+  }
+  if (state.currentTab === 'catalog') container.innerHTML = renderCatalog();
+  else if (state.currentTab === 'cart') container.innerHTML = renderCart();
+  else if (state.currentTab === 'payments') container.innerHTML = renderPayments();
+  else if (state.currentTab === 'profile') container.innerHTML = renderProfile();
+}
+
+function renderAuthScreen() {
+  return `
+    <div style="padding-top:16px;">
+      <div class="banner">
+        <span class="banner-tag">Береке в каждый дом</span>
+        <h2>Смартфоны в честную рассрочку 0-0-12</h2>
+        <p>Оформление онлайн за 3 минуты по ID-карте без визита в банк.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:6px;">Вход по номеру телефона</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Отправим бесплатный SMS-код для входа или регистрации</p>
+        <input class="input" id="authPhoneInput" value="${state.userPhone}" placeholder="+996 XXX XXX XXX" style="margin-bottom:10px;">
+        ${state.otpSent ? `
+          <input class="input" id="authOtpInput" value="4829" maxlength="4" placeholder="4-значный код из SMS" style="margin-bottom:12px;text-align:center;font-weight:700;letter-spacing:6px;">
+          <button class="btn btn-primary" onclick="confirmOtp()">Подтвердить и войти</button>
+        ` : `
+          <button class="btn btn-primary" onclick="requestOtp()">Получить SMS-код</button>
+        `}
+      </div>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn btn-outline btn-sm" onclick="quickDemoLogin()">Быстрый демо-вход для презентации →</button>
+      </div>
+    </div>
+  `;
+}
+
+function requestOtp() {
+  const val = document.getElementById('authPhoneInput').value.trim();
+  if (val) state.userPhone = val;
+  state.otpSent = true;
+  renderClient();
+}
+
+function confirmOtp() {
+  state.isAuthenticated = true;
+  renderClient();
+}
+
+function quickDemoLogin() {
+  state.isAuthenticated = true;
+  renderClient();
+}
+
+function renderCatalog() {
+  const brands = ['Все', 'Apple', 'Samsung', 'Xiaomi'];
+  const colors = ['Все', 'Чёрный титан', 'Пустынный титан', 'Серый', 'Синий', 'Белый'];
+
+  let list = products.filter(p => {
+    const matchBrand = state.selectedBrand === 'Все' || p.brand === state.selectedBrand;
+    const matchColor = state.selectedColor === 'Все' || p.colorName === state.selectedColor;
+    const matchSearch = p.name.toLowerCase().includes(state.searchQuery.toLowerCase()) || p.brand.toLowerCase().includes(state.searchQuery.toLowerCase());
+    return matchBrand && matchColor && matchSearch;
+  });
+
+  if (state.sortBy === 'price_asc') list.sort((a, b) => a.price - b.price);
+  else if (state.sortBy === 'price_desc') list.sort((a, b) => b.price - a.price);
+  else list.sort((a, b) => b.popular - a.popular);
+
+  return `
+    <div class="banner">
+      <span class="banner-tag">Акция • 0% переплаты</span>
+      <h2>Новый смартфон без нагрузки на бюджет</h2>
+      <p>Первый взнос от 0 сом • Срок до 24 месяцев</p>
+    </div>
+
+    <div class="search-row">
+      <input class="input" placeholder="Поиск модели или бренда..." value="${state.searchQuery}" oninput="state.searchQuery=this.value;renderClient()">
+    </div>
+
+    <div class="chips">
+      ${brands.map(b => `<button class="chip ${state.selectedBrand === b ? 'active' : ''}" onclick="state.selectedBrand='${b}';renderClient()">${b}</button>`).join('')}
+    </div>
+
+    <div class="filter-bar">
+      <select class="select-mini" onchange="state.selectedColor=this.value;renderClient()">
+        ${colors.map(c => `<option value="${c}" ${state.selectedColor === c ? 'selected' : ''}>Цвет: ${c}</option>`).join('')}
+      </select>
+      <select class="select-mini" onchange="state.sortBy=this.value;renderClient()">
+        <option value="popular" ${state.sortBy === 'popular' ? 'selected' : ''}>По популярности</option>
+        <option value="price_asc" ${state.sortBy === 'price_asc' ? 'selected' : ''}>Сначала дешевле</option>
+        <option value="price_desc" ${state.sortBy === 'price_desc' ? 'selected' : ''}>Сначала дороже</option>
+      </select>
+    </div>
+
+    <div class="product-grid">
+      ${list.map(p => `
+        <div class="product-card" onclick="openProduct(${p.id})">
+          <div>
+            <div class="phone-art">
+              <svg width="46" height="76" viewBox="0 0 46 76" fill="none">
+                <rect x="2" y="2" width="42" height="72" rx="9" fill="#18181B"/>
+                <rect x="5" y="5" width="36" height="66" rx="7" fill="#27272A"/>
+                <rect x="16" y="8" width="14" height="4" rx="2" fill="#09090B"/>
+              </svg>
+              <span class="color-dot" style="background:${p.colorHex};" title="${p.colorName}"></span>
+            </div>
+            <div class="p-brand">${p.brand} • ${p.colorName}</div>
+            <div class="p-title">${p.name}</div>
+          </div>
+          <div>
+            <div class="p-monthly">от ${fmt(p.price / 12)}/мес</div>
+            <div class="p-full">${fmt(p.price)}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function openProduct(id) {
+  const p = products.find(x => x.id === id);
+  state.activeProduct = p;
+  state.selectedStorage = p.storages[0];
+  state.termMonths = 12;
+  state.downPaymentPct = 0;
+  renderClient();
+}
+
+function calcInstallment(price, months, downPct) {
+  const downAmount = Math.round((price * downPct) / 100);
+  const remainder = price - downAmount;
+  const markupRate = months === 24 ? 0.12 : 0;
+  const totalWithMarkup = remainder * (1 + markupRate);
+  const monthly = totalWithMarkup / months;
+  const overpayment = totalWithMarkup - remainder;
+  return { downAmount, monthly, overpayment, total: downAmount + totalWithMarkup };
+}
+
+function renderProductDetail(p) {
+  const storageBonus = p.storages.indexOf(state.selectedStorage) * 10000;
+  const finalPrice = p.price + storageBonus;
+  const calc = calcInstallment(finalPrice, state.termMonths, state.downPaymentPct);
+
+  return `
+    <button class="btn btn-outline btn-sm" style="margin-bottom:12px;" onclick="state.activeProduct=null;renderClient()">← Назад в каталог</button>
+
+    <div class="card">
+      <div class="phone-art" style="height:140px;">
+        <svg width="64" height="108" viewBox="0 0 46 76" fill="none">
+          <rect x="2" y="2" width="42" height="72" rx="9" fill="#18181B"/>
+          <rect x="5" y="5" width="36" height="66" rx="7" fill="#27272A"/>
+          <rect x="16" y="8" width="14" height="4" rx="2" fill="#09090B"/>
+        </svg>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <span class="p-brand">${p.brand} • ${p.colorName}</span>
+          <h2 style="font-size:20px;margin-top:2px;">${p.name}</h2>
+        </div>
+        <span class="badge badge-green">В наличии</span>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Объём памяти</div>
+        <div class="chips" style="margin-bottom:0;">
+          ${p.storages.map(s => `<button class="chip ${state.selectedStorage === s ? 'active' : ''}" onclick="state.selectedStorage='${s}';renderClient()">${s}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:16px;margin-bottom:4px;">Калькулятор рассрочки</h3>
+      <p style="font-size:12px;color:var(--text-muted);">Настройте комфортный срок и первоначальный взнос</p>
+
+      <div class="term-grid">
+        ${[3, 6, 12, 24].map(m => `
+          <button class="term-btn ${state.termMonths === m ? 'active' : ''}" onclick="state.termMonths=${m};renderClient()">
+            ${m} мес
+          </button>
+        `).join('')}
+      </div>
+
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span>Первоначальный взнос (${state.downPaymentPct}%)</span>
+        <span class="num">${fmt(calc.downAmount)}</span>
+      </div>
+      <input type="range" min="0" max="50" step="10" value="${state.downPaymentPct}" oninput="state.downPaymentPct=Number(this.value);renderClient()">
+
+      <div class="calc-summary">
+        <div class="calc-row">
+          <span>Ежемесячный платёж</span>
+          <span class="num" style="font-size:18px;color:var(--primary);">${fmt(calc.monthly)}</span>
+        </div>
+        <div class="calc-row">
+          <span>Переплата</span>
+          <span class="num" style="color:${calc.overpayment === 0 ? 'var(--primary)' : 'var(--text)'};">${calc.overpayment === 0 ? '0 сом (Честная 0%)' : fmt(calc.overpayment)}</span>
+        </div>
+        <div class="calc-row">
+          <span>Итоговая стоимость</span>
+          <span class="num">${fmt(calc.total)}</span>
+        </div>
+      </div>
+
+      <button class="btn btn-accent" style="margin-top:14px;" onclick="addToCart(${p.id}, ${finalPrice})">Оформить в рассрочку</button>
+    </div>
+  `;
+}
+
+function addToCart(productId, finalPrice) {
+  const p = products.find(x => x.id === productId);
+  const calc = calcInstallment(finalPrice, state.termMonths, state.downPaymentPct);
+  state.cartItem = {
+    product: p,
+    storage: state.selectedStorage,
+    price: finalPrice,
+    months: state.termMonths,
+    downPct: state.downPaymentPct,
+    calc,
+    step: 'form'
+  };
+  document.getElementById('cartTabLabel').textContent = 'Корзина (1)';
+  goTab('cart');
+}
+
+function renderCart() {
+  if (!state.cartItem) {
+    return `
+      <div class="card" style="text-align:center;padding:36px 16px;">
+        <div style="font-size:40px;margin-bottom:10px;">🛒</div>
+        <h3 style="margin-bottom:6px;">Корзина пока пуста</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Выберите смартфон в каталоге и рассчитайте комфортный платёж</p>
+        <button class="btn btn-primary" onclick="goTab('catalog')">Перейти в каталог</button>
+      </div>
+    `;
+  }
+
+  const item = state.cartItem;
+
+  if (item.step === 'scoring') {
+    return `
+      <div class="card" style="text-align:center;padding:36px 16px;">
+        <div style="font-size:42px;margin-bottom:12px;">⏳</div>
+        <h3 style="margin-bottom:6px;">Проверяем заявку...</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Сверяем данные ID-карты и оцениваем кредитный лимит через скоринг Bereke</p>
+        <div class="progress-track"><div class="progress-fill" style="width:75%;"></div></div>
+      </div>
+    `;
+  }
+
+  if (item.step === 'approved') {
+    return `
+      <div class="card" style="border-color:var(--primary);">
+        <span class="badge badge-green">Одобрено мгновенно</span>
+        <h2 style="font-size:20px;margin:10px 0 6px;">Рассрочка одобрена!</h2>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Устройство: <strong>${item.product.name} ${item.storage}</strong> • ${fmt(item.calc.monthly)} × ${item.months} мес.</p>
+
+        <div style="background:var(--bg);padding:12px;border-radius:14px;margin-bottom:14px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Подписание договора простой ЭЦП (SMS-код)</div>
+          <input class="input" value="7319" style="text-align:center;font-weight:800;letter-spacing:6px;">
+        </div>
+
+        <button class="btn btn-primary" onclick="signContract()">Подписать договор и активировать</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span class="badge badge-amber">${item.months} мес. • взнос ${item.downPct}%</span>
+        <button class="btn btn-outline btn-sm" onclick="state.cartItem=null;document.getElementById('cartTabLabel').textContent='Корзина';renderClient()">Удалить</button>
+      </div>
+      <h3>${item.product.name} (${item.storage})</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:4px 0 10px;">Ежемесячный платёж: <strong style="color:var(--primary);">${fmt(item.calc.monthly)}</strong></p>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:10px;">Шаг 1. Верификация личности (KYC)</h3>
+      <div class="kyc-box ${state.kycIdDone ? 'done' : ''}" onclick="state.kycIdDone=true;renderClient()">
+        <div>
+          <strong style="font-size:13px;">Фото ID-карты / паспорта</strong>
+          <div style="font-size:12px;color:var(--text-muted);">${state.kycIdDone ? '✓ Документ распознан (ПИН подтверждён)' : 'Нажмите, чтобы загрузить фото'}</div>
+        </div>
+        <span>${state.kycIdDone ? '✅' : '📷'}</span>
+      </div>
+      <div class="kyc-box ${state.kycSelfieDone ? 'done' : ''}" onclick="state.kycSelfieDone=true;renderClient()">
+        <div>
+          <strong style="font-size:13px;">Селфи с документом (Liveness)</strong>
+          <div style="font-size:12px;color:var(--text-muted);">${state.kycSelfieDone ? '✓ Личность подтверждена' : 'Нажмите для проверки'}</div>
+        </div>
+        <span>${state.kycSelfieDone ? '✅' : '🤳'}</span>
+      </div>
+
+      <h3 style="font-size:15px;margin:14px 0 10px;">Шаг 2. Анкета заёмщика</h3>
+      <input class="input" value="ОсОО «Ала-Тоо Ритейл», менеджер" placeholder="Место работы" style="margin-bottom:8px;">
+      <input class="input" value="65 000 сом" placeholder="Ежемесячный доход" style="margin-bottom:8px;">
+      <input class="input" value="+996 550 987 654 (Брат)" placeholder="Контактное лицо" style="margin-bottom:14px;">
+
+      <button class="btn btn-primary" onclick="submitApplication()">Отправить на скоринг</button>
+    </div>
+  `;
+}
+
+function submitApplication() {
+  state.kycIdDone = true;
+  state.kycSelfieDone = true;
+  state.cartItem.step = 'scoring';
+  renderClient();
+  setTimeout(() => {
+    if (state.cartItem) {
+      state.cartItem.step = 'approved';
+      renderClient();
+    }
+  }, 1100);
+}
+
+function signContract() {
+  const item = state.cartItem;
+  state.installments.unshift({
+    id: 'BRK-2026-095',
+    device: `${item.product.name} ${item.storage}`,
+    total: item.calc.total,
+    monthly: item.calc.monthly,
+    monthsTotal: item.months,
+    monthsPaid: 0,
+    nextDate: '27.12.2026',
+    autoPay: true,
+    status: 'Активна'
+  });
+  state.adminApplications.unshift({
+    id: 'BRK-2026-095',
+    client: state.userName,
+    phone: state.userPhone,
+    device: `${item.product.name} ${item.storage}`,
+    amount: item.calc.total,
+    term: item.months,
+    kyc: 'Проверен',
+    status: 'Одобрено'
+  });
+  state.cartItem = null;
+  document.getElementById('cartTabLabel').textContent = 'Корзина';
+  goTab('payments');
+}
+
+function renderPayments() {
+  return `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);">Карта для автосписания</div>
+          <strong style="font-size:14px;">💳 ${state.linkedCard}</strong>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="changeCard()">Изменить</button>
+      </div>
+    </div>
+
+    ${state.installments.map((inst, idx) => {
+      const pct = Math.round((inst.monthsPaid / inst.monthsTotal) * 100);
+      const remaining = Math.max(0, (inst.monthsTotal - inst.monthsPaid) * inst.monthly);
+      return `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span class="badge ${inst.status === 'Погашена' ? 'badge-green' : 'badge-amber'}">${inst.status}</span>
+            <span style="font-size:12px;color:var(--text-muted);">${inst.id}</span>
+          </div>
+          <h3 style="margin-bottom:4px;">${inst.device}</h3>
+          <div style="font-size:13px;color:var(--text-muted);">Оплачено ${inst.monthsPaid} из ${inst.monthsTotal} платежей</div>
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+
+          <div class="calc-summary">
+            <div class="calc-row">
+              <span>Ближайший платёж (${inst.nextDate})</span>
+              <span class="num">${inst.status === 'Погашена' ? '0 сом' : fmt(inst.monthly)}</span>
+            </div>
+            <div class="calc-row">
+              <span>Остаток долга</span>
+              <span class="num">${fmt(remaining)}</span>
+            </div>
+            <div class="calc-row">
+              <span>Автоплатёж по графику</span>
+              <span class="num" style="color:var(--primary);">${inst.autoPay ? 'Включён ✓' : 'Выключен'}</span>
+            </div>
+          </div>
+
+          ${inst.status !== 'Погашена' ? `
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <button class="btn btn-outline btn-sm" style="flex:1;" onclick="payOneMonth(${idx})">Внести 1 платёж</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="payFullEarly(${idx})">Погасить досрочно</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+function changeCard() {
+  state.linkedCard = state.linkedCard.includes('4821') ? 'Visa MBank •••• 9104' : 'Элкарт •••• 4821';
+  renderClient();
+}
+
+function payOneMonth(idx) {
+  const inst = state.installments[idx];
+  if (inst.monthsPaid < inst.monthsTotal) {
+    inst.monthsPaid += 1;
+    if (inst.monthsPaid >= inst.monthsTotal) inst.status = 'Погашена';
+  }
+  renderClient();
+}
+
+function payFullEarly(idx) {
+  const inst = state.installments[idx];
+  inst.monthsPaid = inst.monthsTotal;
+  inst.status = 'Погашена';
+  renderClient();
+}
+
+function renderProfile() {
+  return `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:48px;height:48px;border-radius:16px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;">АТ</div>
+        <div>
+          <h3>${state.userName}</h3>
+          <div style="font-size:13px;color:var(--text-muted);">${state.userPhone}</div>
+        </div>
+      </div>
+      <span class="badge badge-green">KYC пройден • Лимит 150 000 сом</span>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:10px;">Документы и настройки</h3>
+      <div class="calc-row" style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>Паспорт / ID-карта</span>
+        <span style="color:var(--primary);font-weight:600;">Подтверждён ✓</span>
+      </div>
+      <div class="calc-row" style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>Договоры рассрочки (PDF)</span>
+        <span style="font-weight:600;">${state.installments.length} шт.</span>
+      </div>
+      <div class="calc-row" style="padding:8px 0;">
+        <span>Язык интерфейса</span>
+        <span style="font-weight:600;">Русский / Кыргызча</span>
+      </div>
+    </div>
+
+    <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger-light);" onclick="state.isAuthenticated=false;state.otpSent=false;renderClient()">Выйти из аккаунта</button>
+  `;
+}
+
+function renderAdmin() {
+  const totalVolume = state.adminApplications.reduce((s, a) => s + a.amount, 0);
+  document.getElementById('adminScreen').innerHTML = `
+    <h3 style="margin-bottom:10px;">Аналитика портфеля (CRM)</h3>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div style="font-size:12px;color:var(--text-muted);">Выдано рассрочек</div>
+        <div class="stat-val">${fmt(totalVolume)}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:var(--text-muted);">Просрочка (NPL)</div>
+        <div class="stat-val" style="color:var(--accent);">1.4%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="font-size:15px;">Модерация заявок (${state.adminApplications.length})</h3>
+        <span class="badge badge-green">Онлайн</span>
+      </div>
+      ${state.adminApplications.map((app, i) => `
+        <div style="padding:12px 0;border-top:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <strong style="font-size:13px;">${app.client}</strong>
+            <span class="badge ${app.status === 'Одобрено' ? 'badge-green' : app.status === 'Отказ' ? 'badge-red' : 'badge-amber'}">${app.status}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);">${app.device} • ${fmt(app.amount)} (${app.term} мес.)</div>
+          <div style="font-size:12px;color:var(--primary);margin:4px 0 8px;">KYC: ${app.kyc} • ${app.phone}</div>
+          ${app.status === 'На проверке' ? `
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary btn-sm" onclick="setAdminStatus(${i}, 'Одобрено')">Одобрить</button>
+              <button class="btn btn-outline btn-sm" onclick="setAdminStatus(${i}, 'Отказ')">Отклонить</button>
+            </div>
+          ` : ''}
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <h3 style="font-size:15px;">Каталог и лимиты</h3>
+        <button class="btn btn-outline btn-sm" onclick="addDemoPhone()">+ Добавить модель</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);">Активных моделей в витрине: <strong>${products.length}</strong> • Макс. лимит на клиента: <strong>150 000 сом</strong></p>
+    </div>
+  `;
+}
+
+function setAdminStatus(idx, status) {
+  state.adminApplications[idx].status = status;
+  renderAdmin();
+}
+
+function addDemoPhone() {
+  products.push({
+    id: products.length + 1,
+    brand: 'Apple',
+    name: 'iPhone 16',
+    price: 96900,
+    colorName: 'Ультрамарин',
+    colorHex: '#3B82F6',
+    storages: ['128 ГБ', '256 ГБ'],
+    popular: 10
+  });
+  renderAdmin();
+}
+
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'notifSheet') {
+    const dot = document.getElementById('notifDot');
+    if (dot) dot.style.display = 'none';
+  }
+}
+
+function closeSheet(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function closeSheetOnBg(e, id) {
+  if (e.target.id === id) closeSheet(id);
+}
+
+function sendQuickChat(text) {
+  document.getElementById('chatInput').value = text;
+  sendUserChat();
+}
+
+function sendUserChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const box = document.getElementById('chatHistory');
+  box.innerHTML += `<div class="chat-msg chat-user">${text}</div>`;
+  input.value = '';
+
+  let reply = 'Оператор подключится в течение минуты. По базовым условиям рассрочка оформляется на 3, 6, 12 или 24 месяца по ID-карте.';
+  if (text.toLowerCase().includes('документ')) {
+    reply = 'Для оформления нужен только паспорт или ID-карта гражданина КР и быстрое селфи в приложении.';
+  } else if (text.toLowerCase().includes('досроч')) {
+    reply = 'Погасить рассрочку досрочно (полностью или частично) можно без штрафов в любой день во вкладке «Платежи».';
+  }
+
+  setTimeout(() => {
+    box.innerHTML += `<div class="chat-msg chat-bot">${reply}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }, 350);
+}
+
+renderClient();
+</script>
+</body>
+</html>

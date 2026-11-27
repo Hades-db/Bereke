@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bereke — Рассрочка смартфонов</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="top-switcher">
+  <button id="modeClient" class="active" onclick="switchAppMode('client')">📱 Приложение</button>
+  <button id="modeAdmin" onclick="switchAppMode('admin')">💼 Админ-панель (CRM)</button>
+</div>
+
+<div class="phone">
+  <div class="header">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="#146C43"/>
+        <path d="M16 7C12.5 11.5 12.5 16.5 16 21C19.5 16.5 19.5 11.5 16 7Z" fill="#D97706"/>
+        <path d="M8 17C8 21.5 11.5 24.5 15.5 25C15 21 12 18 8 17Z" fill="#FFFFFF"/>
+        <path d="M24 17C24 21.5 20.5 24.5 16.5 25C17 21 20 18 24 17Z" fill="#FFFFFF"/>
+      </svg>
+      Bereke
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="openModal('notifModal')">🔔<span class="badge"></span></button>
+      <button class="icon-btn" onclick="openModal('chatModal')">💬</button>
+    </div>
+  </div>
+  <div id="clientArea" class="content">
+    <div id="scrAuth" class="screen active">
+      <div class="auth-hero">
+        <h2>Покупки в радость и достаток</h2>
+        <p>Войдите по номеру телефона для оформления рассрочки</p>
+      </div>
+      <div class="card">
+        <label class="field-label">Номер телефона</label>
+        <input id="phoneInput" type="tel" value="+996 700 123 456">
+        <div id="otpBlock" style="display:none;">
+          <label class="field-label">Код из SMS (введите 1234)</label>
+          <input id="otpInput" type="text" placeholder="• • • •" maxlength="4">
+        </div>
+        <button id="authBtn" class="btn btn-primary" onclick="handleAuth()">Получить SMS-код</button>
+      </div>
+      <button class="btn btn-outline demo-btn" onclick="loginSuccess()">⚡ Быстрый демо-вход для презентации</button>
+    </div>
+    <div id="scrCatalog" class="screen">
+      <div class="banner">
+        <span>0% первый взнос</span>
+        <h3>Смартфоны в рассрочку до 24 мес.</h3>
+        <p>Одобрение за 2 минуты по ID-карте без скрытых комиссий</p>
+      </div>
+      <input id="searchInput" type="text" placeholder="🔍 Поиск модели (например, iPhone 15)..." oninput="renderCatalog()">
+      <div class="filter-row">
+        <select id="colorFilter" onchange="renderCatalog()">
+          <option value="all">Цвет: Все</option>
+          <option value="Чёрный">Чёрный</option>
+          <option value="Титановый">Титановый</option>
+          <option value="Синий">Синий</option>
+        </select>
+        <select id="sortFilter" onchange="renderCatalog()">
+          <option value="pop">По популярности</option>
+          <option value="asc">Сначала дешевле</option>
+          <option value="desc">Сначала дороже</option>
+        </select>
+      </div>
+      <div class="chips" id="brandChips">
+        <button class="chip active" onclick="setBrand('all', this)">Все</button>
+        <button class="chip" onclick="setBrand('Apple', this)">Apple</button>
+        <button class="chip" onclick="setBrand('Samsung', this)">Samsung</button>
+        <button class="chip" onclick="setBrand('Xiaomi', this)">Xiaomi</button>
+      </div>
+      <div class="grid" id="catalogGrid"></div>
+    </div>
+    <div id="scrProduct" class="screen">
+      <button class="back-link" onclick="navTo('scrCatalog')">← Назад в каталог</button>
+      <div class="card">
+        <div class="prod-img prod-img-lg" id="detEmoji">📱</div>
+        <div class="muted-xs" id="detSpecs"></div>
+        <h2 class="det-title" id="detTitle"></h2>
+        <div class="row"><span class="muted">Цена при полной оплате:</span><strong class="num" id="detPrice"></strong></div>
+        <div class="mem-section">
+          <div class="muted-xs">Объём памяти:</div>
+          <div class="mem-row" id="memChips"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-heading">Калькулятор рассрочки Bereke</div>
+        <div class="muted-xs">Срок рассрочки:</div>
+        <div class="term-grid">
+          <button class="term-btn" onclick="setTerm(3, this)">3 мес</button>
+          <button class="term-btn" onclick="setTerm(6, this)">6 мес</button>
+          <button class="term-btn active" onclick="setTerm(12, this)">12 мес</button>
+          <button class="term-btn" onclick="setTerm(24, this)">24 мес</button>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <span class="muted-xs">Первоначальный взнос (<span id="downPct">0</span>%):</span>
+          <strong class="num" id="downVal">0 сом</strong>
+        </div>
+        <input type="range" id="downSlider" min="0" max="50" step="10" value="0" oninput="calcInstallment()">
+        <div class="calc-summary">
+          <div class="row" style="margin-bottom:4px;">
+            <span>Ежемесячный платёж:</span>
+            <strong class="num monthly-big" id="monthlyVal">0 сом</strong>
+          </div>
+          <div class="row muted-xs" style="margin:0;">
+            <span>Переплата (наценка):</span>
+            <span class="num" id="overpayVal">0 сом (0%)</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="addToCart()">Добавить в корзину</button>
+    </div>
+    <div id="scrCart" class="screen">
+      <h3 class="section-title">Оформление рассрочки</h3>
+      <div id="cartEmpty" class="card empty-box">Корзина пуста. Выберите смартфон в каталоге.</div>
+      <div id="cartFlow" style="display:none;">
+        <div class="card">
+          <div class="row"><strong id="cartItemName"></strong><span class="num" id="cartItemTotal"></span></div>
+          <div class="muted-xs" id="cartItemDetails"></div>
+        </div>
+        <div class="card">
+          <div class="card-heading">1. Верификация личности (KYC)</div>
+          <div class="kyc-box" id="kycIdBox" onclick="toggleKyc('kycIdBox', '✅ ID-карта (лицевая и оборот) загружена')">📄 Загрузить фото паспорта / ID-карты</div>
+          <div class="kyc-box" id="kycSelfieBox" onclick="toggleKyc('kycSelfieBox', '✅ Селфи с документом подтверждено')">🤳 Сделать селфи с документом</div>
+        </div>
+        <div class="card">
+          <div class="card-heading">2. Анкета заёмщика</div>
+          <input type="text" id="appWork" value="ОсОО «ТехноСервис», менеджер" placeholder="Место работы">
+          <input type="number" id="appIncome" value="65000" placeholder="Ежемесячный доход (сом)">
+          <input type="tel" id="appContact" value="+996 555 987 654" placeholder="Контактное лицо">
+        </div>
+        <button class="btn btn-primary" onclick="submitScoring()">Отправить на скоринг</button>
+      </div>
+      <div id="scoringBox" class="card scoring-box" style="display:none;">
+        <div id="scoringLoading">
+          <div class="emoji-lg">⏳</div>
+          <strong>Проверяем данные через скоринг...</strong>
+          <p class="muted-xs" style="margin-top:4px;">Оценка платёжеспособности и KYC</p>
+        </div>
+        <div id="scoringApproved" style="display:none;">
+          <div class="emoji-lg">🎉</div>
+          <strong class="approved-title">Рассрочка одобрена!</strong>
+          <p class="muted-sm">Подпишите электронный договор кодом из SMS (4821)</p>
+          <input type="text" id="signCode" value="4821" class="otp-sign">
+          <button class="btn btn-accent" onclick="signContract()">Подписать договор</button>
+        </div>
+      </div>
+    </div>
+    <div id="scrPayments" class="screen">
+      <h3 class="section-title">Мои рассрочки и график</h3>
+      <div class="card">
+        <div class="row"><strong id="activePlanTitle">iPhone 15 Pro (256 ГБ)</strong><span class="status-pill">Активна</span></div>
+        <div class="row muted-sm"><span>Остаток долга:</span><strong class="num" style="color:var(--text);" id="remainBalance">72 000 сом</strong></div>
+        <div class="card-strip">
+          <div class="row" style="margin:0;"><span>💳 Автоплатёж: <strong id="linkedCard">Элкарт •••• 4512</strong></span><a href="#" onclick="changeCard();return false;">Изменить</a></div>
+        </div>
+        <div class="btn-pair">
+          <button class="btn btn-primary btn-sm" onclick="payInstallment(false)">Оплатить платёж</button>
+          <button class="btn btn-outline btn-sm" onclick="payInstallment(true)">Досрочно</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-heading">Календарь платежей</div>
+        <div id="scheduleList"></div>
+      </div>
+    </div>
+    <div id="scrProfile" class="screen">
+      <div class="card profile-head">
+        <div class="avatar">АК</div>
+        <div>
+          <strong>Азамат Касымов</strong>
+          <div class="muted-xs">+996 700 123 456</div>
+          <span class="kyc-verified">✔ KYC подтверждён (ID-карта)</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-heading">Лимит рассрочки Bereke</div>
+        <div class="row"><span>Доступный лимит:</span><strong class="num" style="color:var(--primary);">150 000 сом</strong></div>
+        <div class="progress-bar"><div style="width:65%;"></div></div>
+      </div>
+      <div class="card">
+        <div class="row clickable" onclick="openModal('chatModal')"><span>💬 Чат с поддержкой Bereke</span><span>→</span></div>
+        <div class="row clickable" style="margin:0;" onclick="navTo('scrAuth')"><span>🚪 Выйти из аккаунта</span><span>→</span></div>
+      </div>
+    </div>
+  </div>
+  <div id="adminArea" class="content" style="display:none;">
+    <h3 class="section-title">CRM / Админ-панель Bereke</h3>
+    <div class="grid" style="margin-bottom:12px;">
+      <div class="card" style="margin:0;"><div class="muted-xs">Выдано за месяц</div><strong class="num stat-green">4 850 000 с</strong></div>
+      <div class="card" style="margin:0;"><div class="muted-xs">Просрочка (NPL)</div><strong class="num stat-amber">1.8%</strong></div>
+    </div>
+    <div class="card">
+      <div class="card-heading">Модерация заявок (KYC)</div>
+      <div id="adminAppsList">
+        <div class="mod-item">
+          <div class="row" style="margin-bottom:2px;"><strong>Айгерим Сатыбалдиева</strong><span class="mod-tag">Проверка KYC</span></div>
+          <div class="muted-xs" style="margin-bottom:6px;">Samsung Galaxy S24 • 12 мес • Доход: 55 000 с</div>
+          <div class="btn-pair">
+            <button class="btn btn-primary btn-xs" onclick="this.parentElement.innerHTML='<span class=ok-txt>✔ Одобрено вручную</span>'">Одобрить</button>
+            <button class="btn btn-outline btn-xs" onclick="this.parentElement.innerHTML='<span class=no-txt>✖ Отклонено</span>'">Отклонить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-heading">Добавить смартфон в каталог</div>
+      <input id="newPhoneName" type="text" placeholder="Модель (напр. iPhone 16 Pro)">
+      <input id="newPhonePrice" type="number" placeholder="Цена в сомах (напр. 115000)">
+      <button class="btn btn-primary btn-sm" onclick="adminAddPhone()">+ Добавить в витрину</button>
+    </div>
+  </div>
+  <div id="bottomNav" class="nav" style="display:none;">
+    <button id="navCatalog" class="active" onclick="navTo('scrCatalog')"><span>📱</span>Каталог</button>
+    <button id="navCart" onclick="navTo('scrCart')"><span>🛒</span>Корзина</button>
+    <button id="navPayments" onclick="navTo('scrPayments')"><span>📅</span>Платежи</button>
+    <button id="navProfile" onclick="navTo('scrProfile')"><span>👤</span>Профиль</button>
+  </div>
+  <div id="notifModal" class="modal" onclick="if(event.target===this)closeModal('notifModal')">
+    <div class="sheet">
+      <div class="row"><strong>Уведомления</strong><button class="close-btn" onclick="closeModal('notifModal')">✕</button></div>
+      <div class="card"><strong class="notif-amber">⏰ Напоминание о платеже</strong><p class="muted-xs" style="margin-top:4px;">Через 3 дня плановое списание 6 000 сом по рассрочке iPhone 15 Pro.</p></div>
+      <div class="card"><strong class="notif-green">✔ Лимит увеличен</strong><p class="muted-xs" style="margin-top:4px;">Вам доступен персональный лимит до 150 000 сом без первого взноса.</p></div>
+    </div>
+  </div>
+  <div id="chatModal" class="modal" onclick="if(event.target===this)closeModal('chatModal')">
+    <div class="sheet">
+      <div class="row"><strong>Поддержка Bereke</strong><button class="close-btn" onclick="closeModal('chatModal')">✕</button></div>
+      <div id="chatBox" class="chat-box">
+        <div class="chat-msg chat-bot">Саламатсызбы! Я помощник Bereke. Подсказать по условиям рассрочки или досрочному погашению?</div>
+      </div>
+      <div class="chat-input-row">
+        <input id="chatInput" type="text" placeholder="Напишите вопрос..." style="margin:0;">
+        <button class="btn btn-primary send-btn" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
