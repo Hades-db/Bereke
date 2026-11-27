@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bereke — Интерактивный прототип для презентации</title>
+<style>
+  :root {
+    --primary: #146C43;
+    --primary-hover: #0F5132;
+    --primary-light: #E8F5EE;
+    --accent: #D97706;
+    --accent-hover: #B45309;
+    --accent-light: #FEF3C7;
+    --bg-outer: #EAEAE6;
+    --bg-app: #F7F7F5;
+    --surface: #FFFFFF;
+    --text-main: #18181B;
+    --text-muted: #6B7280;
+    --border: #E4E4E7;
+    --danger: #DC2626;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--bg-outer);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  /* Презентационная боковая панель для спикера */
+  .presenter-panel {
+    max-width: 340px;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+  }
+
+  .brand-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .logo-steps {
+    width: 28px;
+    height: 28px;
+    display: inline-block;
+  }
+
+  .brand-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text-main);
+  }
+
+  .presenter-desc {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .step-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .step-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-app);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .step-btn:hover {
+    border-color: var(--primary);
+  }
+
+  .step-btn.active {
+    background: var(--primary);
+    color: #FFFFFF;
+    border-color: var(--primary);
+  }
+
+  .step-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(0,0,0,0.08);
+  }
+
+  .step-btn.active .step-badge {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .mode-switch {
+    display: flex;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .mode-btn {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-main);
+  }
+
+  .mode-btn.active {
+    background: var(--text-main);
+    color: #FFFFFF;
+    border-color: var(--text-main);
+  }
+
+  /* Рамка смартфона */
+  .phone-frame {
+    width: 390px;
+    height: 820px;
+    background: var(--bg-app);
+    border-radius: 46px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14), 0 0 0 10px #1F1F23;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    height: 44px;
+    padding: 12px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--bg-app);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .notch {
+    width: 110px;
+    height: 24px;
+    background: #1F1F23;
+    border-radius: 99px;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .app-screen {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 18px 88px;
+    display: none;
+    animation: fadeIn 0.22s ease;
+  }
+
+  .app-screen.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Общие элементы UI */
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .app-logo-small {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+  }
+
+  .pill-tag {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 99px;
+  }
+
+  .search-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    background: transparent;
+    color: var(--text-main);
+  }
+
+  .promo-banner {
+    background: linear-gradient(135deg, #146C43 0%, #0D4B2E 100%);
+    color: #FFFFFF;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .promo-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .promo-banner h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .promo-banner p {
+    font-size: 13px;
+    opacity: 0.88;
+  }
+
+  .chips-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+
+  .chip {
+    padding: 7px 14px;
+    border-radius: 99px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .chip.active {
+    background: var(--text-main);
+    color: #FFFFFF;
+    border-color: var(--text-main);
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .product-card {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  }
+
+  .phone-illustration {
+    width: 100%;
+    height: 110px;
+    background: #F4F4F2;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .phone-svg {
+    width: 48px;
+    height: 86px;
+    border-radius: 10px;
+    border: 2.5px solid #27272A;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  }
+
+  .phone-island {
+    width: 14px;
+    height: 4px;
+    background: #27272A;
+    border-radius: 4px;
+  }
+
+  .product-brand {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .product-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 2px 0 8px;
+    line-height: 1.25;
+  }
+
+  .monthly-pill {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+    padding: 5px 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .full-price {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 5px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Экран 2: Карточка и калькулятор */
+  .back-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .detail-hero {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .detail-hero .phone-svg {
+    width: 64px;
+    height: 116px;
+    margin: 0 auto 12px;
+  }
+
+  .detail-title {
+    font-size: 19px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .detail-specs {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .memory-pills {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .mem-pill {
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--bg-app);
+  }
+
+  .mem-pill.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  .calc-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .calc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .calc-title {
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .zero-badge {
+    background: var(--accent-light);
+    color: var(--accent-hover);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .term-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .term-btn {
+    padding: 9px 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-app);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .term-btn.active {
+    background: var(--primary);
+    color: #FFFFFF;
+    border-color: var(--primary);
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .slider-val {
+    font-weight: 800;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--primary);
+    margin-bottom: 16px;
+    cursor: pointer;
+  }
+
+  .summary-box {
+    background: var(--bg-app);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .summary-monthly-label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .summary-monthly-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-right {
+    text-align: right;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cta-btn {
+    width: 100%;
+    padding: 15px;
+    border-radius: 16px;
+    border: none;
+    background: var(--accent);
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .cta-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  .cta-btn.green {
+    background: var(--primary);
+  }
+
+  .cta-btn.green:hover {
+    background: var(--primary-hover);
+  }
+
+  /* Экран 3: KYC и Анкета */
+  .form-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .form-card h4 {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .kyc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .kyc-box {
+    border: 1.5px dashed #A1A1AA;
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-app);
+    transition: all 0.2s;
+  }
+
+  .kyc-box.uploaded {
+    border-style: solid;
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  .kyc-icon {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .kyc-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .kyc-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .input-group {
+    margin-bottom: 12px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+
+  .input-group input, .input-group select {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-app);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  /* Экран 4: Скоринг и SMS */
+  .scoring-center {
+    text-align: center;
+    padding: 24px 12px;
+  }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--primary-light);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .approved-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #FFFFFF;
+    font-size: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+  }
+
+  .sms-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .sms-inputs input {
+    width: 48px;
+    height: 54px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 800;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+  }
+
+  /* Экран 5: График платежей */
+  .active-plan-card {
+    background: var(--primary);
+    color: #FFFFFF;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .plan-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.22);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 10px 0 8px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #FBBF24;
+    border-radius: 99px;
+    transition: width 0.3s;
+  }
+
+  .schedule-item {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .sched-date {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .sched-status {
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .status-paid { color: var(--primary); }
+  .status-next { color: var(--accent); }
+  .status-wait { color: var(--text-muted); }
+
+  .sched-amount {
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Нижний TabBar */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: 8px;
+    z-index: 20;
+  }
+
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+
+  .tab-item.active {
+    color: var(--primary);
+  }
+
+  .tab-icon {
+    font-size: 18px;
+  }
+
+  /* Админка CRM */
+  .admin-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  .stat-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary);
+    margin-top: 4px;
+  }
+
+  .req-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .req-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .btn-sm {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Левая панель управления презентацией -->
+  <div class="presenter-panel">
+    <div class="brand-header">
+      <svg class="logo-steps" viewBox="0 0 32 32" fill="none">
+        <rect x="4" y="20" width="8" height="8" rx="2" fill="#146C43"/>
+        <rect x="12" y="13" width="8" height="15" rx="2" fill="#146C43"/>
+        <rect x="20" y="6" width="8" height="22" rx="2" fill="#146C43"/>
+      </svg>
+      <span class="brand-title">bereke</span>
+    </div>
+    <p class="presenter-desc">
+      Интерактивный кликабельный прототип для презентации. Вы можете нажимать прямо на экран телефона или переключать этапы сценария здесь.
+    </p>
+
+    <div class="step-nav" id="stepNav">
+      <button class="step-btn active" onclick="goScreen('screen-catalog', this)">
+        <span>1. Каталог смартфонов</span>
+        <span class="step-badge">Старт</span>
+      </button>
+      <button class="step-btn" onclick="goScreen('screen-detail', this)">
+        <span>2. Живой калькулятор</span>
+        <span class="step-badge">Слайдер</span>
+      </button>
+      <button class="step-btn" onclick="goScreen('screen-kyc', this)">
+        <span>3. KYC и Анкета заемщика</span>
+        <span class="step-badge">Паспорт</span>
+      </button>
+      <button class="step-btn" onclick="goScreen('screen-scoring', this)">
+        <span>4. Скоринг и SMS-подпись</span>
+        <span class="step-badge">Одобрено</span>
+      </button>
+      <button class="step-btn" onclick="goScreen('screen-schedule', this)">
+        <span>5. График и Автоплатеж</span>
+        <span class="step-badge">Кабинет</span>
+      </button>
+    </div>
+
+    <div class="mode-switch">
+      <button class="mode-btn active" id="btnClientMode" onclick="setMode('client')">📱 Клиент (App)</button>
+      <button class="mode-btn" id="btnAdminMode" onclick="setMode('admin')">🛡️ Админка (CRM)</button>
+    </div>
+  </div>
+
+  <!-- Макет смартфона -->
+  <div class="phone-frame">
+    <div class="notch"></div>
+    <div class="status-bar">
+      <span>09:41</span>
+      <span>5G • 100%</span>
+    </div>
+
+    <!-- ЭКРАН 1: Каталог -->
+    <div class="app-screen active" id="screen-catalog">
+      <div class="top-row">
+        <div class="app-logo-small">
+          <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+            <rect x="4" y="20" width="8" height="8" rx="2" fill="#146C43"/>
+            <rect x="12" y="13" width="8" height="15" rx="2" fill="#146C43"/>
+            <rect x="20" y="6" width="8" height="22" rx="2" fill="#146C43"/>
+          </svg>
+          <span>bereke</span>
+        </div>
+        <span class="pill-tag">Лимит до 150 000 с</span>
+      </div>
+
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Поиск смартфона..." oninput="filterProducts()">
+      </div>
+
+      <div class="promo-banner">
+        <span class="promo-badge">0% ПЕРЕПЛАТЫ</span>
+        <h3>Смартфон сегодня — оплата частями</h3>
+        <p>Одобрение за 2 минуты по ID-карте без справки о доходах</p>
+      </div>
+
+      <div class="chips-row">
+        <div class="chip active" onclick="selectBrand('All', this)">Все</div>
+        <div class="chip" onclick="selectBrand('Apple', this)">Apple</div>
+        <div class="chip" onclick="selectBrand('Samsung', this)">Samsung</div>
+        <div class="chip" onclick="selectBrand('Xiaomi', this)">Xiaomi</div>
+      </div>
+
+      <div class="products-grid" id="productsGrid"></div>
+    </div>
+
+    <!-- ЭКРАН 2: Карточка товара + Калькулятор -->
+    <div class="app-screen" id="screen-detail">
+      <div class="top-row">
+        <button class="back-btn" onclick="goScreen('screen-catalog')">←</button>
+        <span style="font-weight:700; font-size:14px;">Условия рассрочки</span>
+        <div style="width:36px;"></div>
+      </div>
+
+      <div class="detail-hero">
+        <div class="phone-svg" id="detailPhoneColor" style="background:#2C2C2E;">
+          <div class="phone-island"></div>
+        </div>
+        <div class="detail-title" id="detailTitle">iPhone 15 Pro</div>
+        <div class="detail-specs" id="detailSpecs">6.1" OLED • A17 Pro • Титан</div>
+        <div class="memory-pills">
+          <div class="mem-pill active" onclick="selectMemory(0, this)">128 ГБ</div>
+          <div class="mem-pill" onclick="selectMemory(12000, this)">256 ГБ</div>
+          <div class="mem-pill" onclick="selectMemory(26000, this)">512 ГБ</div>
+        </div>
+      </div>
+
+      <div class="calc-card">
+        <div class="calc-header">
+          <span class="calc-title">Калькулятор bereke</span>
+          <span class="zero-badge" id="overpayBadge">0% переплата</span>
+        </div>
+
+        <div class="term-grid">
+          <button class="term-btn" onclick="selectTerm(3, this)">3 мес</button>
+          <button class="term-btn" onclick="selectTerm(6, this)">6 мес</button>
+          <button class="term-btn active" onclick="selectTerm(12, this)">12 мес</button>
+          <button class="term-btn" onclick="selectTerm(24, this)">24 мес</button>
+        </div>
+
+        <div class="slider-label">
+          <span>Первоначальный взнос</span>
+          <span class="slider-val" id="downPayLabel">0 сом</span>
+        </div>
+        <input type="range" id="downPaySlider" min="0" max="50" step="5" value="0" oninput="recalcInstallment()">
+
+        <div class="summary-box">
+          <div>
+            <div class="summary-monthly-label">Ежемесячный платеж</div>
+            <div class="summary-monthly-val" id="monthlyResult">7 917 сом</div>
+          </div>
+          <div class="summary-right">
+            <div>Цена: <b id="totalPriceLabel">95 000 сом</b></div>
+            <div id="overpayText">Переплата: 0 сом</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="cta-btn" onclick="goScreen('screen-kyc')">Оформить рассрочку</button>
+    </div>
+
+    <!-- ЭКРАН 3: KYC и Анкета -->
+    <div class="app-screen" id="screen-kyc">
+      <div class="top-row">
+        <button class="back-btn" onclick="goScreen('screen-detail')">←</button>
+        <span style="font-weight:700; font-size:14px;">Верификация (KYC)</span>
+        <span class="pill-tag">Шаг 1 из 2</span>
+      </div>
+
+      <div class="form-card">
+        <h4>1. Документы (нажмите для теста)</h4>
+        <div class="kyc-grid">
+          <div class="kyc-box" id="kycPassport" onclick="toggleKyc('kycPassport', 'ID-карта загружена')">
+            <div class="kyc-icon">🪪</div>
+            <div class="kyc-text" id="kycPassportText">Фото ID-карты</div>
+            <div class="kyc-sub">Лицевая сторона</div>
+          </div>
+          <div class="kyc-box" id="kycSelfie" onclick="toggleKyc('kycSelfie', 'Селфи подтверждено')">
+            <div class="kyc-icon">🤳</div>
+            <div class="kyc-text" id="kycSelfieText">Селфи-проверка</div>
+            <div class="kyc-sub">Liveness-тест</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h4>2. Анкета заемщика</h4>
+        <div class="input-group">
+          <label>ФИО (распознано из ID-карты)</label>
+          <input type="text" value="Асанов Азамат Бакытович">
+        </div>
+        <div class="input-group">
+          <label>Место работы и должность</label>
+          <input type="text" value="ОсОО «ТехноСервис», Менеджер">
+        </div>
+        <div class="input-group">
+          <label>Ежемесячный доход (сом)</label>
+          <input type="number" value="65000">
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label>Контактное лицо (родственник)</label>
+          <input type="text" value="+996 700 554 321 (Брат)">
+        </div>
+      </div>
+
+      <button class="cta-btn green" onclick="startScoring()">Отправить на скоринг</button>
+    </div>
+
+    <!-- ЭКРАН 4: Скоринг и SMS -->
+    <div class="app-screen" id="screen-scoring">
+      <div id="scoringLoading" class="scoring-center">
+        <div class="spinner"></div>
+        <h3 style="font-size:18px; margin-bottom:6px;">Проверяем заявку...</h3>
+        <p style="font-size:13px; color:var(--text-muted);">
+          Сверяем данные с банковским скорингом и формируем персональный лимит
+        </p>
+      </div>
+
+      <div id="scoringResult" style="display:none;">
+        <div class="scoring-center" style="padding-bottom:12px;">
+          <div class="approved-badge">✓</div>
+          <h3 style="font-size:20px; font-weight:800; margin-bottom:4px;">Рассрочка одобрена!</h3>
+          <p style="font-size:13px; color:var(--text-muted);" id="approvedSubtitle">
+            iPhone 15 Pro • 12 мес. • 7 917 сом/мес
+          </p>
+        </div>
+
+        <div class="form-card" style="text-align:center;">
+          <h4>Подписание договора по SMS</h4>
+          <p style="font-size:12px; color:var(--text-muted);">
+            Мы отправили 4-значный код подтверждения на номер <b>+996 555 123 456</b>
+          </p>
+          <div class="sms-inputs">
+            <input type="text" maxlength="1" value="4">
+            <input type="text" maxlength="1" value="8">
+            <input type="text" maxlength="1" value="2">
+            <input type="text" maxlength="1" value="9">
+          </div>
+          <button class="cta-btn green" onclick="confirmContract()">Подписать договор</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ЭКРАН 5: График платежей и Кабинет -->
+    <div class="app-screen" id="screen-schedule">
+      <div class="top-row">
+        <span style="font-size:18px; font-weight:800;">Мои рассрочки</span>
+        <span class="pill-tag">Активна</span>
+      </div>
+
+      <div class="active-plan-card">
+        <div class="plan-top">
+          <div>
+            <div style="font-size:12px; opacity:0.8;">Договор №BRK-2026-084</div>
+            <div style="font-size:17px; font-weight:800;" id="planDeviceName">iPhone 15 Pro (128 ГБ)</div>
+          </div>
+          <span style="background:rgba(255,255,255,0.2); padding:4px 9px; border-radius:8px; font-size:11px; font-weight:700;">Автоплатеж ВКЛ</span>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="planProgressFill" style="width: 15%;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; opacity:0.9;">
+          <span id="planPaidCount">Оплачено: 0 из 12</span>
+          <span id="planRemainingSum">Остаток: 95 000 сом</span>
+        </div>
+      </div>
+
+      <div class="form-card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:12px; color:var(--text-muted);">Привязанная карта</div>
+          <div style="font-size:14px; font-weight:700;">💳 Элкарт / Visa •••• 4821</div>
+        </div>
+        <button class="btn-sm" style="background:var(--accent-light); color:var(--accent-hover); flex:none; padding:8px 12px;" onclick="payEarly()">
+          Погасить сейчас
+        </button>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:800; margin:12px 0 8px;">График списаний</h4>
+      <div id="scheduleList"></div>
+    </div>
+
+    <!-- ЭКРАН АДМИНКИ (CRM) -->
+    <div class="app-screen" id="screen-admin">
+      <div class="top-row">
+        <span style="font-size:18px; font-weight:800;">bereke CRM</span>
+        <span class="pill-tag">Админ-панель</span>
+      </div>
+
+      <div class="admin-stat-grid">
+        <div class="stat-card">
+          <div style="font-size:11px; color:var(--text-muted); font-weight:700;">ВЫДАНО ЗА МЕСЯЦ</div>
+          <div class="stat-val">4.85 млн с</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:11px; color:var(--text-muted); font-weight:700;">ПРОСРОЧКА (NPL)</div>
+          <div class="stat-val" style="color:var(--accent);">1.4%</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:800; margin-bottom:8px;">Заявки на модерации (KYC)</h4>
+      <div id="adminRequests">
+        <div class="req-card" id="req1">
+          <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px;">
+            <span>Асанов Азамат Б.</span>
+            <span style="color:var(--primary);">95 000 сом</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">
+            iPhone 15 Pro • 12 мес. • Скоринг: 780 баллов
+          </div>
+          <div class="req-actions">
+            <button class="btn-sm" style="background:var(--primary); color:#fff;" onclick="moderateReq('req1', 'Одобрено ✓')">Одобрить</button>
+            <button class="btn-sm" style="background:#FEE2E2; color:var(--danger);" onclick="moderateReq('req1', 'Отклонено ✕')">Отклонить</button>
+          </div>
+        </div>
+
+        <div class="req-card" id="req2">
+          <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px;">
+            <span>Кадырова Айгуль Т.</span>
+            <span style="color:var(--primary);">68 000 сом</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">
+            Samsung Galaxy S24 • 6 мес. • Ручная проверка ID
+          </div>
+          <div class="req-actions">
+            <button class="btn-sm" style="background:var(--primary); color:#fff;" onclick="moderateReq('req2', 'Одобрено ✓')">Одобрить</button>
+            <button class="btn-sm" style="background:#FEE2E2; color:var(--danger);" onclick="moderateReq('req2', 'Отклонено ✕')">Отклонить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Нижняя панель навигации -->
+    <div class="tab-bar" id="clientTabBar">
+      <button class="tab-item active" onclick="goScreen('screen-catalog')">
+        <span class="tab-icon">📱</span>
+        <span>Каталог</span>
+      </button>
+      <button class="tab-item" onclick="goScreen('screen-detail')">
+        <span class="tab-icon">🧮</span>
+        <span>Калькулятор</span>
+      </button>
+      <button class="tab-item" onclick="goScreen('screen-schedule')">
+        <span class="tab-icon">📅</span>
+        <span>Платежи</span>
+      </button>
+    </div>
+  </div>
+
+<script>
+  const phones = [
+    { id: 1, brand: 'Apple', name: 'iPhone 15 Pro', specs: '6.1" OLED • A17 Pro • Титан', price: 95000, color: '#3A3A3C' },
+    { id: 2, brand: 'Samsung', name: 'Galaxy S24 Ultra', specs: '6.8" AMOLED • S-Pen • 200 МП', price: 108000, color: '#27272A' },
+    { id: 3, brand: 'Apple', name: 'iPhone 15', specs: '6.1" OLED • A16 Bionic • 48 МП', price: 74000, color: '#93C5FD' },
+    { id: 4, brand: 'Xiaomi', name: 'Xiaomi 14', specs: '6.36" LTPO • Leica • Snapdragon 8', price: 62000, color: '#146C43' },
+    { id: 5, brand: 'Samsung', name: 'Galaxy A55 5G', specs: '6.6" Super AMOLED • 5000 мАч', price: 36000, color: '#CBD5E1' },
+    { id: 6, brand: 'Xiaomi', name: 'Redmi Note 13 Pro', specs: '6.67" 120Hz • 200 МП • 67W', price: 27000, color: '#D97706' }
+  ];
+
+  let selectedBrand = 'All';
+  let currentPhone = phones[0];
+  let memoryExtra = 0;
+  let selectedTerm = 12;
+  let paidMonths = 0;
+
+  function fmt(num) {
+    return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' сом';
+  }
+
+  function renderProducts() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+
+    phones.filter(p => {
+      const matchBrand = selectedBrand === 'All' || p.brand === selectedBrand;
+      const matchSearch = p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query);
+      return matchBrand && matchSearch;
+    }).forEach(p => {
+      const minMonthly = Math.round(p.price / 12);
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.onclick = () => openProduct(p);
+      card.innerHTML = `
+        <div>
+          <div class="phone-illustration">
+            <div class="phone-svg" style="background:${p.color};">
+              <div class="phone-island"></div>
+            </div>
+          </div>
+          <div class="product-brand">${p.brand}</div>
+          <div class="product-name">${p.name}</div>
+        </div>
+        <div>
+          <div class="monthly-pill">от ${fmt(minMonthly)}/мес</div>
+          <div class="full-price">${fmt(p.price)}</div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function selectBrand(brand, el) {
+    selectedBrand = brand;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderProducts();
+  }
+
+  function filterProducts() {
+    renderProducts();
+  }
+
+  function openProduct(phone) {
+    currentPhone = phone;
+    memoryExtra = 0;
+    document.querySelectorAll('.mem-pill').forEach((p, idx) => {
+      p.classList.toggle('active', idx === 0);
+    });
+    document.getElementById('detailPhoneColor').style.background = phone.color;
+    document.getElementById('detailTitle').innerText = phone.name;
+    document.getElementById('detailSpecs').innerText = phone.specs;
+    document.getElementById('downPaySlider').value = 0;
+    recalcInstallment();
+    goScreen('screen-detail');
+  }
+
+  function selectMemory(extra, el) {
+    memoryExtra = extra;
+    document.querySelectorAll('.mem-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    recalcInstallment();
+  }
+
+  function selectTerm(months, el) {
+    selectedTerm = months;
+    document.querySelectorAll('.term-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    recalcInstallment();
+  }
+
+  function recalcInstallment() {
+    const basePrice = currentPhone.price + memoryExtra;
+    const downPercent = parseInt(document.getElementById('downPaySlider').value, 10);
+    const downPay = Math.round((basePrice * downPercent) / 100);
+    const rate = selectedTerm === 24 ? 0.12 : 0; // 3, 6, 12 мес — 0% переплаты
+    const remainder = basePrice - downPay;
+    const totalWithRate = Math.round(remainder * (1 + rate));
+    const overpay = totalWithRate - remainder;
+    const monthly = Math.round(totalWithRate / selectedTerm);
+
+    document.getElementById('downPayLabel').innerText = fmt(downPay) + ` (${downPercent}%)`;
+    document.getElementById('monthlyResult').innerText = fmt(monthly);
+    document.getElementById('totalPriceLabel').innerText = fmt(basePrice + overpay);
+    document.getElementById('overpayText').innerText = 'Переплата: ' + fmt(overpay);
+    document.getElementById('overpayBadge').innerText = rate === 0 ? '0% переплата' : 'Ставка 12%';
+
+    document.getElementById('approvedSubtitle').innerText =
+      `${currentPhone.name} • ${selectedTerm} мес. • ${fmt(monthly)}/мес`;
+    document.getElementById('planDeviceName').innerText = currentPhone.name;
+    renderSchedule(monthly, totalWithRate);
+  }
+
+  function toggleKyc(boxId, doneText) {
+    const box = document.getElementById(boxId);
+    box.classList.add('uploaded');
+    document.getElementById(boxId + 'Text').innerText = doneText + ' ✓';
+  }
+
+  function startScoring() {
+    goScreen('screen-scoring');
+    document.getElementById('scoringLoading').style.display = 'block';
+    document.getElementById('scoringResult').style.display = 'none';
+    setTimeout(() => {
+      document.getElementById('scoringLoading').style.display = 'none';
+      document.getElementById('scoringResult').style.display = 'block';
+    }, 1100);
+  }
+
+  function confirmContract() {
+    paidMonths = 0;
+    recalcInstallment();
+    goScreen('screen-schedule');
+  }
+
+  function renderSchedule(monthly, totalSum) {
+    const list = document.getElementById('scheduleList');
+    list.innerHTML = '';
+    const monthsNames = ['Декабрь', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь'];
+
+    const pct = Math.min(100, Math.round((paidMonths / selectedTerm) * 100));
+    document.getElementById('planProgressFill').style.width = (pct || 6) + '%';
+    document.getElementById('planPaidCount').innerText = `Оплачено: ${paidMonths} из ${selectedTerm}`;
+    const rem = Math.max(0, totalSum - paidMonths * monthly);
+    document.getElementById('planRemainingSum').innerText = `Остаток: ${fmt(rem)}`;
+
+    for (let i = 0; i < Math.min(selectedTerm, 6); i++) {
+      const mName = monthsNames[i % 12];
+      let statusHtml = '<div class="sched-status status-wait">По графику</div>';
+      if (i < paidMonths) {
+        statusHtml = '<div class="sched-status status-paid">Оплачено ✓</div>';
+      } else if (i === paidMonths) {
+        statusHtml = '<div class="sched-status status-next">Ближайшее автосписание</div>';
+      }
+
+      const item = document.createElement('div');
+      item.className = 'schedule-item';
+      item.innerHTML = `
+        <div>
+          <div class="sched-date">15 ${mName} 2027</div>
+          ${statusHtml}
+        </div>
+        <div class="sched-amount">${fmt(monthly)}</div>
+      `;
+      list.appendChild(item);
+    }
+  }
+
+  function payEarly() {
+    if (paidMonths < selectedTerm) {
+      paidMonths++;
+      recalcInstallment();
+    }
+  }
+
+  function moderateReq(id, statusText) {
+    const card = document.getElementById(id);
+    card.querySelector('.req-actions').innerHTML =
+      `<div style="font-size:12px; font-weight:800; color:var(--primary); padding-top:4px;">Статус обновлен: ${statusText}</div>`;
+  }
+
+  function goScreen(screenId, btnEl) {
+    document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+
+    const map = {
+      'screen-catalog': 0,
+      'screen-detail': 1,
+      'screen-kyc': 2,
+      'screen-scoring': 3,
+      'screen-schedule': 4
+    };
+    if (screenId in map) {
+      const btns = document.querySelectorAll('.step-btn');
+      btns.forEach((b, i) => b.classList.toggle('active', i === map[screenId]));
+    }
+
+    const tabs = document.querySelectorAll('.tab-item');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (screenId === 'screen-catalog') tabs[0].classList.add('active');
+    if (screenId === 'screen-detail' || screenId === 'screen-kyc' || screenId === 'screen-scoring') tabs[1].classList.add('active');
+    if (screenId === 'screen-schedule') tabs[2].classList.add('active');
+  }
+
+  function setMode(mode) {
+    document.getElementById('btnClientMode').classList.toggle('active', mode === 'client');
+    document.getElementById('btnAdminMode').classList.toggle('active', mode === 'admin');
+    document.getElementById('clientTabBar').style.display = mode === 'client' ? 'flex' : 'none';
+    if (mode === 'admin') {
+      goScreen('screen-admin');
+    } else {
+      goScreen('screen-catalog');
+    }
+  }
+
+  renderProducts();
+  recalcInstallment();
+</script>
+</body>
+</html>
